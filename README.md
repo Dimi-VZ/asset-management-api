@@ -99,5 +99,17 @@ cp .env.example .env
 # - SMTP_USER and SMTP_PASSWORD (required for email alerts)
 # - JWT_SECRET (required for authentication)
 ```
+### Email configuration (tests vs runtime)
+
+Email-related tests are intentionally configured to send emails to
+dedicated test inboxes (e.g. AI or asset-related test addresses).
+
+This is done to:
+- Prevent accidental emails being sent to real users
+- Keep test behaviour predictable and isolated
+- Allow reviewers to substitute their own test inboxes if desired
+
+Test email addresses are currently hardcoded for safety and clarity,
+but can be easily externalised via environment variables if required.
 
 See [Setup Guide](SETUP.md) for detailed configuration instructions.
