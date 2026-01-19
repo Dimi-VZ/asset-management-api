@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: asset_postgres
+    environment:
+      POSTGRES_USER: assetuser
+      POSTGRES_PASSWORD: assetpass
+      POSTGRES_DB: assetdb
+    ports:
+      - "5433:5432"  # Changed host port to 5433 to avoid conflict
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assetuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: asset_redis
+    ports:
+      - "6380:6379"  # Changed host port to 6380 to avoid conflict
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: asset_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"  # Changed host port to 8001 to avoid conflict
+    environment:
+      - DATABASE_URL=postgresql://assetuser:assetpass@postgres:5432/assetdb
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - JWT_ALGORITHM=HS256
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
